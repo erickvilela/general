@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="display-4 mb-4">
+                    <i class="bi bi-arrow-right-circle"></i> YouTube to Buzzsprout
+                </h1>
+                <p class="lead">Convert YouTube videos to podcast episodes with ease</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <!-- Progress Indicator -->
+    <div class="progress-indicator">
+        <div class="progress-step active" id="step1">
+            <div class="step-circle">1</div>
+            <div class="step-label">YouTube URL</div>
+        </div>
+        <div class="progress-step" id="step2">
+            <div class="step-circle">2</div>
+            <div class="step-label">Extract Metadata</div>
+        </div>
+        <div class="progress-step" id="step3">
+            <div class="step-circle">3</div>
+            <div class="step-label">Download Audio</div>
+        </div>
+        <div class="progress-step" id="step4">
+            <div class="step-circle">4</div>
+            <div class="step-label">Confirm Details</div>
+        </div>
+        <div class="progress-step" id="step5">
+            <div class="step-circle">5</div>
+            <div class="step-label">Upload to Buzzsprout</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-link-45deg"></i> Enter YouTube Video URL
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form id="urlForm" action="/process" method="POST">
+                        <div class="mb-3">
+                            <label for="youtube_url" class="form-label">YouTube Video URL</label>
+                            <input type="url" class="form-control" id="youtube_url" name="youtube_url" 
+                                   placeholder="https://www.youtube.com/watch?v=..." required>
+                            <div class="form-text">
+                                Paste the URL of the YouTube video you want to convert to a podcast episode.
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-play-circle"></i> Start Processing
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Loading Spinner -->
+                    <div id="loading" class="loading-spinner text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Processing your YouTube video...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions Card -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-info-circle"></i> How It Works
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="bi bi-1-circle"></i> Submit URL</h5>
+                            <p>Paste your YouTube video URL and click "Start Processing"</p>
+                            
+                            <h5><i class="bi bi-2-circle"></i> Extract Metadata</h5>
+                            <p>We'll extract the video title, description, and other metadata</p>
+                            
+                            <h5><i class="bi bi-3-circle"></i> Download Audio</h5>
+                            <p>The audio track is extracted and converted to MP3 format</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="bi bi-4-circle"></i> Review & Edit</h5>
+                            <p>Confirm and edit the episode details before uploading</p>
+                            
+                            <h5><i class="bi bi-5-circle"></i> Upload to Buzzsprout</h5>
+                            <p>Your episode is uploaded to your Buzzsprout podcast</p>
+                            
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>Note:</strong> Make sure your Buzzsprout credentials are configured in the .env file.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Status -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-gear"></i> Configuration Status
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div id="config-status">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            <span>Checking configuration...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check configuration status
+    fetch('/api/config-status')
+        .then(response => response.json())
+        .then(data => {
+            const statusDiv = document.getElementById('config-status');
+            if (data.success) {
+                statusDiv.innerHTML = `
+                    <div class="d-flex align-items-center text-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <span>Connected to Buzzsprout: ${data.podcast_title}</span>
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="d-flex align-items-center text-danger">
+                        <i class="bi bi-x-circle me-2"></i>
+                        <span>Configuration Error: ${data.error}</span>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            Please check your .env file and ensure BUZZSPROUT_API_TOKEN and BUZZSPROUT_PODCAST_ID are set correctly.
+                        </small>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            document.getElementById('config-status').innerHTML = `
+                <div class="d-flex align-items-center text-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <span>Unable to check configuration</span>
+                </div>
+            `;
+        });
+
+    // Handle form submission
+    document.getElementById('urlForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const url = document.getElementById('youtube_url').value;
+        if (!url) return;
+        
+        // Show loading
+        showLoading('loading');
+        updateProgressStep(1, 'completed');
+        updateProgressStep(2, 'active');
+        
+        // Submit form normally after showing loading
+        setTimeout(() => {
+            this.submit();
+        }, 100);
+    });
+});
+</script>
+{% endblock %}
