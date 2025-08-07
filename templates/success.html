@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Progress Indicator -->
+    <div class="progress-indicator">
+        <div class="progress-step completed" id="step1">
+            <div class="step-circle">✓</div>
+            <div class="step-label">YouTube URL</div>
+        </div>
+        <div class="progress-step completed" id="step2">
+            <div class="step-circle">✓</div>
+            <div class="step-label">Extract Metadata</div>
+        </div>
+        <div class="progress-step completed" id="step3">
+            <div class="step-circle">✓</div>
+            <div class="step-label">Download Audio</div>
+        </div>
+        <div class="progress-step completed" id="step4">
+            <div class="step-circle">✓</div>
+            <div class="step-label">Confirm Details</div>
+        </div>
+        <div class="progress-step completed" id="step5">
+            <div class="step-circle">✓</div>
+            <div class="step-label">Upload to Buzzsprout</div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Success Message -->
+            <div class="success-message text-center">
+                <i class="bi bi-check-circle-fill" style="font-size: 3rem; color: #28a745;"></i>
+                <h2 class="mt-3">Episode Successfully Uploaded!</h2>
+                <p class="lead">Your YouTube video has been converted and uploaded to Buzzsprout.</p>
+            </div>
+
+            <!-- Episode Details -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-info-circle"></i> Episode Details
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Episode Information:</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Title:</strong> {{ episode.title }}</li>
+                                <li><strong>Episode ID:</strong> {{ episode.id }}</li>
+                                {% if episode.episode_number %}
+                                <li><strong>Episode Number:</strong> {{ episode.episode_number }}</li>
+                                {% endif %}
+                                {% if episode.season_number %}
+                                <li><strong>Season Number:</strong> {{ episode.season_number }}</li>
+                                {% endif %}
+                                <li><strong>Status:</strong> 
+                                    {% if episode.published %}
+                                        <span class="badge bg-success">Published</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Draft</span>
+                                    {% endif %}
+                                </li>
+                                {% if episode.private %}
+                                <li><strong>Visibility:</strong> <span class="badge bg-secondary">Private</span></li>
+                                {% endif %}
+                                {% if episode.explicit %}
+                                <li><strong>Content:</strong> <span class="badge bg-danger">Explicit</span></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Technical Details:</h5>
+                            <ul class="list-unstyled">
+                                {% if episode.duration %}
+                                <li><strong>Duration:</strong> {{ episode.duration }} seconds</li>
+                                {% endif %}
+                                {% if episode.file_size %}
+                                <li><strong>File Size:</strong> {{ "%.2f"|format(episode.file_size / (1024*1024)) }} MB</li>
+                                {% endif %}
+                                {% if episode.audio_url %}
+                                <li><strong>Audio URL:</strong> <a href="{{ episode.audio_url }}" target="_blank" class="text-decoration-none">View File</a></li>
+                                {% endif %}
+                                <li><strong>Created:</strong> {{ episode.created_at or 'Just now' }}</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {% if episode.description %}
+                    <div class="mt-3">
+                        <h5>Description:</h5>
+                        <div class="p-3 bg-light rounded">
+                            <p class="mb-0">{{ episode.description[:200] }}{% if episode.description|length > 200 %}...{% endif %}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="card mt-4">
+                <div class="card-body text-center">
+                    <h5>What would you like to do next?</h5>
+                    <div class="d-flex flex-wrap gap-2 justify-content-center mt-3">
+                        {% if episode.website_url %}
+                        <a href="{{ episode.website_url }}" target="_blank" class="btn btn-primary">
+                            <i class="bi bi-box-arrow-up-right"></i> View on Buzzsprout
+                        </a>
+                        {% endif %}
+                        
+                        <a href="/episode/{{ episode.id }}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Edit Episode
+                        </a>
+                        
+                        <a href="/" class="btn btn-outline-success">
+                            <i class="bi bi-plus-circle"></i> Convert Another Video
+                        </a>
+                        
+                        <a href="/history" class="btn btn-outline-info">
+                            <i class="bi bi-clock-history"></i> View History
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sharing Options -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-share"></i> Share Your Episode
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <p>Your episode is now live! Share it with your audience:</p>
+                    
+                    {% if episode.website_url %}
+                    <div class="mb-3">
+                        <label for="episodeUrl" class="form-label">Episode URL:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="episodeUrl" value="{{ episode.website_url }}" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('episodeUrl')">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if podcast_info and podcast_info.website_url %}
+                    <div class="mb-3">
+                        <label for="podcastUrl" class="form-label">Podcast URL:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="podcastUrl" value="{{ podcast_info.website_url }}" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('podcastUrl')">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-2">
+                        {% if episode.website_url %}
+                        <a href="https://twitter.com/intent/tweet?text=Check out my new podcast episode: {{ episode.title|urlencode }}&url={{ episode.website_url|urlencode }}" 
+                           target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-twitter"></i> Tweet
+                        </a>
+                        
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ episode.website_url|urlencode }}" 
+                           target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-facebook"></i> Share
+                        </a>
+                        
+                        <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ episode.website_url|urlencode }}" 
+                           target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-linkedin"></i> LinkedIn
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tips for Next Time -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-lightbulb"></i> Tips for Better Episodes
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Content Optimization:</h6>
+                            <ul>
+                                <li>Add chapter markers for longer episodes</li>
+                                <li>Include show notes with key points</li>
+                                <li>Use consistent episode numbering</li>
+                                <li>Optimize your episode title for search</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Promotion Tips:</h6>
+                            <ul>
+                                <li>Share on social media platforms</li>
+                                <li>Add to your website or blog</li>
+                                <li>Include in email newsletters</li>
+                                <li>Encourage reviews and subscriptions</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    element.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    
+    // Show feedback
+    const button = element.nextElementSibling;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-check"></i> Copied!';
+    button.classList.add('btn-success');
+    button.classList.remove('btn-outline-secondary');
+    
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+
+// Auto-celebration animation
+document.addEventListener('DOMContentLoaded', function() {
+    // Add a subtle celebration effect
+    const successIcon = document.querySelector('.bi-check-circle-fill');
+    if (successIcon) {
+        successIcon.style.animation = 'pulse 2s infinite';
+    }
+});
+</script>
+
+<style>
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+</style>
+{% endblock %}
